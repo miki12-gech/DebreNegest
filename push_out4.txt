@@ -1,0 +1,34 @@
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma\schema.prisma.
+Datasource "db": PostgreSQL database "neondb", schema "public" at "ep-noisy-fog-ainwig73.c-4.us-east-1.aws.neon.tech"
+
+Drift detected: Your database schema is not in sync with your migration history.
+
+The following is a summary of the differences between the expected database schema given your migrations files, and the actual schema of the database.
+
+It should be understood as the set of changes to get from the expected schema to the actual schema.
+
+If you are running this the first time on an existing database, please make sure to read this documentation page:
+https://www.prisma.io/docs/guides/database/developing-with-prisma-migrate/troubleshooting-development
+
+[+] Added extensions
+  - vector
+
+[+] Added enums
+  - AcademicYear
+  - ConversationType
+  - NotificationType
+  - PostTargetType
+  - PresenceStatus
+  - ReactionType
+  - Role
+  - Sex
+  - Status
+  - TargetType
+  - TheologyRole
+
+We need to reset the "public" schema at "ep-noisy-fog-ainwig73.c-4.us-east-1.aws.neon.tech"
+
+You may use prisma migrate reset to drop the development database.
+All data will be lost.

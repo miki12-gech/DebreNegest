@@ -1,0 +1,8 @@
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma\schema.prisma.
+Datasource "db": PostgreSQL database "neondb", schema "public" at "ep-noisy-fog-ainwig73.c-4.us-east-1.aws.neon.tech"
+Error: P1014
+
+The underlying table for model `User` does not exist.
+
