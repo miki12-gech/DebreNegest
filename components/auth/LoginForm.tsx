@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { useForm } from "react-form-hooks";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 
@@ -47,7 +47,7 @@ export const LoginForm = () => {
                     if (data?.success) {
                         form.reset();
                         toast.success(data.success);
-                        router.push("/feed"); // Redirect to main feed
+                        router.push("/feed");
                     }
                 })
                 .catch(() => toast.error("Something went wrong"));
