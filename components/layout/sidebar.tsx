@@ -108,7 +108,7 @@ export function Sidebar() {
 
         {/* User section */}
         {session?.user && (
-          <div className="border-t border-orthodox-gold/10 p-4">
+          <div className="border-t border-orthodox-gold/10 p-4 space-y-3">
             <div className="flex items-center gap-3">
               <Avatar className="h-9 w-9">
                 <AvatarImage src={session.user.image || ""} />
@@ -122,14 +122,14 @@ export function Sidebar() {
                   {session.user.email}
                 </p>
               </div>
-              <button
-                onClick={() => signOut({ callbackUrl: "/" })}
-                className="p-2 rounded-lg text-orthodox-parchment/40 hover:text-orthodox-red hover:bg-orthodox-red/10 transition-colors"
-                title="Sign out"
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
             </div>
+            <button
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-sm font-medium text-orthodox-red bg-orthodox-red/10 hover:bg-orthodox-red/20 transition-colors"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </button>
           </div>
         )}
       </div>
