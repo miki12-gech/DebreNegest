@@ -45,8 +45,7 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
       include: {
         messages: {
-          take: 1,
-          orderBy: { createdAt: "desc" },
+          orderBy: { createdAt: "asc" },
         },
       },
     });
