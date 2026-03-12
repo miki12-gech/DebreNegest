@@ -40,7 +40,7 @@ export const register = async (values: z.infer<typeof RegisterSchema>) => {
                 name: fullName, // NextAuth sometimes expects `name`
                 email,
                 password: hashedPassword,
-                classId,
+                class: { connect: { id: classId } },
                 image: image || null,
                 // Role defaults to MEMBER in Prisma Schema
             },
