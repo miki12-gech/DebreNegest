@@ -148,11 +148,18 @@ export default function TheologyPage() {
               conversations.map((conv) => (
                 <button
                   key={conv.id}
-                  onClick={() => {
+                  onClick={async () => {
                     setCurrentConversationId(conv.id);
-                    // Load messages for this conversation
-                    const convMessages = conv.messages || [];
-                    setMessages(convMessages);
+                    // Lazy-load messages for this conversation
+                    try {
+                      const res = await fetch(`/api/theology/${conv.id}`);
+                      const data = await res.json();
+                      if (Array.isArray(data)) {
+                        setMessages(data);
+                      }
+                    } catch {
+                      toast.error("Failed to load conversation");
+                    }
                   }}
                   className={cn(
                     "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
