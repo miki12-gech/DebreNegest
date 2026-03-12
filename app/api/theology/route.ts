@@ -3,9 +3,13 @@ import { db } from "@/lib/db/prisma";
 import { auth } from "@/auth";
 import Groq from "groq-sdk";
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+function getGroqClient() {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
+    throw new Error("GROQ_API_KEY environment variable is not set. Please add it to your .env.local file.");
+  }
+  return new Groq({ apiKey });
+}
 
 const SYSTEM_PROMPT = `You are "Ask the Fathers" - an Orthodox theological knowledge assistant for the Ethiopian Orthodox Tewahedo Church's Sunday School platform (ደብረ ነገስት).
 
@@ -114,6 +118,7 @@ export async function POST(req: NextRequest) {
     messageHistory.push({ role: "user", content: question });
 
     // Call Groq API
+    const groq = getGroqClient();
     const completion = await groq.chat.completions.create({
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
@@ -141,6 +146,9 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error("THEOLOGY_AI_ERROR", error);
-    return NextResponse.json({ error: "Failed to get answer" }, { status: 500 });
+    const message = error instanceof Error && error.message.includes("GROQ_API_KEY")
+      ? "The AI service is not configured. Please contact an administrator."
+      : "Failed to get answer";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

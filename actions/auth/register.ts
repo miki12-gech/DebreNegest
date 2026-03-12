@@ -8,6 +8,7 @@ const RegisterSchema = z.object({
     fullName: z.string().min(1, { message: "Name is required" }),
     email: z.string().email({ message: "Invalid email address" }),
     password: z.string().min(6, { message: "Minimum 6 characters required" }),
+    classId: z.string().min(1, { message: "Please select a class" }),
     image: z.string().optional(),
 });
 
@@ -18,7 +19,7 @@ export const register = async (values: z.infer<typeof RegisterSchema>) => {
         return { error: "Invalid fields!" };
     }
 
-    const { email, password, fullName, image } = validatedFields.data;
+    const { email, password, fullName, classId, image } = validatedFields.data;
 
     try {
         const existingUser = await db.user.findUnique({
@@ -39,6 +40,7 @@ export const register = async (values: z.infer<typeof RegisterSchema>) => {
                 name: fullName, // NextAuth sometimes expects `name`
                 email,
                 password: hashedPassword,
+                class: { connect: { id: classId } },
                 image: image || null,
                 // Role defaults to MEMBER in Prisma Schema
             },
