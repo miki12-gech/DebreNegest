@@ -8,7 +8,6 @@ import {
   BookOpen,
   MessageCircle,
   Bell,
-  Settings,
   LogOut,
   Shield,
   Cross,

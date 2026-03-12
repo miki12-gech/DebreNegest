@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { Send, ImagePlus, Globe, Pin } from "lucide-react";
+import { Send } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -57,7 +57,7 @@ export function CreatePost({ classId, onPostCreated }: CreatePostProps) {
         body: JSON.stringify({
           title: title || null,
           content,
-          classId: classId || selectedClassId || null,
+          classId: classId || (selectedClassId && selectedClassId !== "none" ? selectedClassId : null),
         }),
       });
 

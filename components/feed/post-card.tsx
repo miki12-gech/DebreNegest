@@ -2,13 +2,19 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { Heart, MessageCircle, Bookmark, Pin, MoreHorizontal, Send } from "lucide-react";
+import { Heart, MessageCircle, Bookmark, Pin, MoreHorizontal, Send, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn, formatDate, getInitials } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -122,6 +128,26 @@ export function PostCard({ post, onUpdate }: PostCardProps) {
     }
   };
 
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this post?")) return;
+    try {
+      const res = await fetch(`/api/posts?postId=${post.id}`, { method: "DELETE" });
+      if (res.ok) {
+        toast.success("Post deleted");
+        onUpdate?.();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to delete post");
+      }
+    } catch {
+      toast.error("Failed to delete post");
+    }
+  };
+
+  const canDelete =
+    session?.user?.id === post.author.id ||
+    session?.user?.role === "SUPER_ADMIN";
+
   const toggleComments = () => {
     if (!showComments) {
       loadComments();
@@ -161,6 +187,24 @@ export function PostCard({ post, onUpdate }: PostCardProps) {
               {post.isGlobal && " · Global"}
             </p>
           </div>
+          {canDelete && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  className="text-orthodox-red cursor-pointer"
+                  onClick={handleDelete}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete post
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
 
         {/* Post content */}
