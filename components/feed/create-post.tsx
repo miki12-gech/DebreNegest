@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { Send, Globe, Crown, Loader2 } from "lucide-react";
+import { Send, Crown } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -36,9 +36,7 @@ export function CreatePost({ classId, onPostCreated }: CreatePostProps) {
   const [classes, setClasses] = useState<ClassOption[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showTitle, setShowTitle] = useState(false);
-  const isAdmin = session?.user?.role === "SUPER_ADMIN";
   const isClassLeader = session?.user?.role === "CLASS_ADMIN";
-  const [myAdminClassId, setMyAdminClassId] = useState<string | null>(null);
   const [myAdminClassName, setMyAdminClassName] = useState<string | null>(null);
 
   useEffect(() => {
@@ -51,7 +49,6 @@ export function CreatePost({ classId, onPostCreated }: CreatePostProps) {
           if (isClassLeader && session?.user?.id) {
             for (const cls of data) {
               if (cls.admins?.some((a: { user: { id: string } }) => a.user.id === session.user.id)) {
-                setMyAdminClassId(cls.id);
                 setMyAdminClassName(cls.name);
                 setSelectedClassId(cls.id);
                 break;
