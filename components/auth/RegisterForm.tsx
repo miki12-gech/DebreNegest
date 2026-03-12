@@ -51,14 +51,20 @@ export const RegisterForm = () => {
 
     useEffect(() => {
         fetch("/api/classes/public")
-            .then((res) => res.json())
+            .then((res) => {
+                if (!res.ok) throw new Error("Failed to load classes");
+                return res.json();
+            })
             .then((data) => {
                 if (Array.isArray(data)) {
                     setClasses(data);
                 }
                 setLoadingClasses(false);
             })
-            .catch(() => setLoadingClasses(false));
+            .catch(() => {
+                toast.error("Failed to load classes. Please refresh the page.");
+                setLoadingClasses(false);
+            });
     }, []);
 
     const form = useForm<z.infer<typeof RegisterSchema>>({
