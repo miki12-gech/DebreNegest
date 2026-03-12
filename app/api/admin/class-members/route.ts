@@ -74,11 +74,21 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { userId, classId } = body;
+    const { userId: directUserId, email, classId } = body;
+
+    // Support both userId and email-based lookup
+    let userId = directUserId;
+    if (!userId && email) {
+      const userByEmail = await db.user.findUnique({ where: { email } });
+      if (!userByEmail) {
+        return NextResponse.json({ error: "User not found with that email" }, { status: 404 });
+      }
+      userId = userByEmail.id;
+    }
 
     if (!userId || !classId) {
       return NextResponse.json(
-        { error: "User ID and Class ID are required" },
+        { error: "User ID (or email) and Class ID are required" },
         { status: 400 }
       );
     }
