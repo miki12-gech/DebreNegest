@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, useState } from "react";
+import { useTransition, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -16,21 +16,54 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { UploadDropzone } from "@/lib/uploadthing";
+import { BookOpen } from "lucide-react";
+
+interface ClassOption {
+    id: string;
+    name: string;
+}
+
+const classIcons: Record<string, string> = {
+    "መዝሙር": "🎵",
+    "ትምህርቲ": "📖",
+    "ኪነጥበብ": "🎨",
+    "አባላት ጉዳይ": "👥",
+    "ኦዲት እና ኢንስፔክሽን": "📋",
+    "ልምዓት": "🌱",
+};
 
 const RegisterSchema = z.object({
     fullName: z.string().min(1, { message: "Name is required" }),
     email: z.string().email({ message: "Invalid email address" }),
     password: z.string().min(6, { message: "Minimum 6 characters required" }),
     image: z.string().optional(),
+    classId: z.string().optional(),
 });
 
 export const RegisterForm = () => {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [imageUrl, setImageUrl] = useState("");
+    const [classes, setClasses] = useState<ClassOption[]>([]);
+
+    useEffect(() => {
+        fetch("/api/classes")
+            .then((res) => res.json())
+            .then((data) => {
+                if (Array.isArray(data)) setClasses(data);
+            })
+            .catch(console.error);
+    }, []);
 
     const form = useForm<z.infer<typeof RegisterSchema>>({
         resolver: zodResolver(RegisterSchema),
@@ -39,11 +72,12 @@ export const RegisterForm = () => {
             email: "",
             password: "",
             image: "",
+            classId: "",
         },
     });
 
     const onSubmit = (values: z.infer<typeof RegisterSchema>) => {
-        values.image = imageUrl; // Attach uploaded image before submit
+        values.image = imageUrl;
 
         startTransition(() => {
             register(values)
@@ -53,7 +87,7 @@ export const RegisterForm = () => {
                     }
                     if (data?.success) {
                         toast.success(data.success);
-                        router.push("/login"); // Redirect to login after successful register
+                        router.push("/login");
                     }
                 })
                 .catch(() => toast.error("Something went wrong"));
@@ -113,6 +147,41 @@ export const RegisterForm = () => {
                                         type="password"
                                     />
                                 </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    {/* Class Selection */}
+                    <FormField
+                        control={form.control}
+                        name="classId"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="flex items-center gap-2">
+                                    <BookOpen className="h-4 w-4 text-orthodox-gold" />
+                                    Select Your Class (ክፍል)
+                                </FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Choose a class to join..." />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {classes.map((cls) => (
+                                            <SelectItem key={cls.id} value={cls.id}>
+                                                <span className="flex items-center gap-2">
+                                                    <span>{classIcons[cls.name] || "📚"}</span>
+                                                    <span>{cls.name}</span>
+                                                </span>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-xs text-orthodox-parchment/40 mt-1">
+                                    Choose which department you belong to
+                                </p>
                                 <FormMessage />
                             </FormItem>
                         )}

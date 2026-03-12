@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { Send, ImagePlus, Globe, Pin } from "lucide-react";
+import { Send, Globe, Crown, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,15 +37,31 @@ export function CreatePost({ classId, onPostCreated }: CreatePostProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showTitle, setShowTitle] = useState(false);
   const isAdmin = session?.user?.role === "SUPER_ADMIN";
+  const isClassLeader = session?.user?.role === "CLASS_ADMIN";
+  const [myAdminClassId, setMyAdminClassId] = useState<string | null>(null);
+  const [myAdminClassName, setMyAdminClassName] = useState<string | null>(null);
 
   useEffect(() => {
     if (!classId) {
       fetch("/api/classes")
         .then((res) => res.json())
-        .then((data) => setClasses(data))
+        .then((data) => {
+          setClasses(data);
+          // If class leader, find their administered class
+          if (isClassLeader && session?.user?.id) {
+            for (const cls of data) {
+              if (cls.admins?.some((a: { user: { id: string } }) => a.user.id === session.user.id)) {
+                setMyAdminClassId(cls.id);
+                setMyAdminClassName(cls.name);
+                setSelectedClassId(cls.id);
+                break;
+              }
+            }
+          }
+        })
         .catch(console.error);
     }
-  }, [classId]);
+  }, [classId, isClassLeader, session?.user?.id]);
 
   const handleSubmit = async () => {
     if (!content.trim()) return;
@@ -114,7 +130,13 @@ export function CreatePost({ classId, onPostCreated }: CreatePostProps) {
                 >
                   {showTitle ? "Hide Title" : "Add Title"}
                 </Button>
-                {!classId && (
+                {!classId && isClassLeader && myAdminClassName && (
+                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orthodox-burgundy/15 border border-orthodox-burgundy/20 text-xs text-orthodox-gold">
+                    <Crown className="h-3.5 w-3.5" />
+                    Posting to {myAdminClassName}
+                  </span>
+                )}
+                {!classId && !isClassLeader && (
                   <Select
                     value={selectedClassId}
                     onValueChange={setSelectedClassId}

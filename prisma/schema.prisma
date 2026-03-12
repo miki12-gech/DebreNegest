@@ -92,6 +92,7 @@ model User {
   accounts             Account[]
   sessions             Session[]
   classesAdministered  ClassAdmin[]
+  classMemberships     ClassMember[]
   posts                Post[]
   comments             Comment[]
   likes                Like[]
@@ -111,6 +112,7 @@ model Class {
   createdAt   DateTime @default(now())
 
   admins        ClassAdmin[]
+  members       ClassMember[]
   posts         Post[]
   conversations Conversation[]
 }
@@ -119,6 +121,18 @@ model ClassAdmin {
   id        String @id @default(cuid())
   userId    String
   classId   String
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  class Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, classId])
+}
+
+model ClassMember {
+  id        String   @id @default(cuid())
+  userId    String
+  classId   String
+  joinedAt  DateTime @default(now())
 
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   class Class @relation(fields: [classId], references: [id], onDelete: Cascade)

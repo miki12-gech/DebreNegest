@@ -73,12 +73,42 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
     }
 
+    // CLASS_ADMIN can only post to their own class
+    if (session.user.role === "CLASS_ADMIN" && classId) {
+      const isAdminOfClass = await db.classAdmin.findUnique({
+        where: {
+          userId_classId: {
+            userId: session.user.id,
+            classId,
+          },
+        },
+      });
+
+      if (!isAdminOfClass) {
+        return NextResponse.json(
+          { error: "You can only post to your own class" },
+          { status: 403 }
+        );
+      }
+    }
+
+    // If CLASS_ADMIN posts without classId, auto-assign to their class
+    let resolvedClassId = classId || null;
+    if (session.user.role === "CLASS_ADMIN" && !classId) {
+      const adminClass = await db.classAdmin.findFirst({
+        where: { userId: session.user.id },
+      });
+      if (adminClass) {
+        resolvedClassId = adminClass.classId;
+      }
+    }
+
     const post = await db.post.create({
       data: {
         title,
         content,
         image,
-        classId: classId || null,
+        classId: resolvedClassId,
         isGlobal: isGlobal || false,
         isPinned: isPinned || false,
         authorId: session.user.id,

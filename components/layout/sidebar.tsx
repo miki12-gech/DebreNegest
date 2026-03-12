@@ -13,6 +13,7 @@ import {
   Shield,
   Cross,
   User,
+  Crown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -32,10 +33,15 @@ const adminItems = [
   { href: "/admin", label: "Admin Panel", icon: Shield },
 ];
 
+const classLeaderItems = [
+  { href: "/class-leader", label: "My Class", icon: Crown },
+];
+
 export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === "SUPER_ADMIN";
+  const isClassLeader = session?.user?.role === "CLASS_ADMIN";
 
   return (
     <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 z-30">
@@ -85,6 +91,30 @@ export function Sidebar() {
             <>
               <Separator className="my-3" />
               {adminItems.map((item) => {
+                const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                      isActive
+                        ? "bg-orthodox-burgundy/30 text-orthodox-gold shadow-sm"
+                        : "text-orthodox-parchment/60 hover:text-orthodox-parchment hover:bg-orthodox-burgundy/10"
+                    )}
+                  >
+                    <item.icon className={cn("h-5 w-5", isActive && "text-orthodox-gold")} />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </>
+          )}
+
+          {isClassLeader && (
+            <>
+              <Separator className="my-3" />
+              {classLeaderItems.map((item) => {
                 const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                 return (
                   <Link

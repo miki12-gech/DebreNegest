@@ -20,6 +20,16 @@ export async function GET() {
         role: true,
         createdAt: true,
         _count: { select: { posts: true, comments: true } },
+        classesAdministered: {
+          include: {
+            class: { select: { id: true, name: true } },
+          },
+        },
+        classMemberships: {
+          include: {
+            class: { select: { id: true, name: true } },
+          },
+        },
       },
     });
 
