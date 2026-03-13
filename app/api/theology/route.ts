@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Build message history for context
-    const messageHistory = theologyConversation.messages.map((msg) => ({
+    const messageHistory = theologyConversation.messages.map((msg: { role: string; content: string }) => ({
       role: msg.role === "USER" ? "user" as const : "assistant" as const,
       content: msg.content,
     }));
