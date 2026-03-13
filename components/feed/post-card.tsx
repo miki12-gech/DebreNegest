@@ -137,6 +137,9 @@ export function PostCard({ post, onUpdate }: PostCardProps) {
         setReplyText("");
         setReplyingTo(null);
         loadComments();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to post reply");
       }
     } catch {
       toast.error("Failed to post reply");
