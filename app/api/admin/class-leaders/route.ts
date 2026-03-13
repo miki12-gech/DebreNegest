@@ -28,11 +28,14 @@ export async function POST(req: NextRequest) {
       data: { userId, classId },
     });
 
-    // Also update user role to CLASS_ADMIN if they are currently MEMBER
-    await db.user.update({
-      where: { id: userId },
-      data: { role: "CLASS_ADMIN" },
-    });
+    // Only promote to CLASS_ADMIN if they are currently MEMBER (don't downgrade SUPER_ADMIN)
+    const user = await db.user.findUnique({ where: { id: userId }, select: { role: true } });
+    if (user?.role === "MEMBER") {
+      await db.user.update({
+        where: { id: userId },
+        data: { role: "CLASS_ADMIN" },
+      });
+    }
 
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (error) {

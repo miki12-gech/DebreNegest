@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +34,7 @@ interface ClassMember {
 
 export default function ClassLeaderPage() {
   const { data: session, status } = useSession();
+  const router = useRouter();
   const [adminClasses, setAdminClasses] = useState<ClassInfo[]>([]);
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [members, setMembers] = useState<ClassMember[]>([]);
@@ -43,7 +44,8 @@ export default function ClassLeaderPage() {
   useEffect(() => {
     if (status === "loading") return;
     if (!session?.user || session.user.role !== "CLASS_ADMIN") {
-      redirect("/feed");
+      router.push("/feed");
+      return;
     }
 
     // Fetch user's administered classes
