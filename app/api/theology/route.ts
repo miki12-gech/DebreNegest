@@ -3,9 +3,13 @@ import { db } from "@/lib/db/prisma";
 import { auth } from "@/auth";
 import Groq from "groq-sdk";
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+function getGroqClient() {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
+    throw new Error("GROQ_API_KEY is not configured");
+  }
+  return new Groq({ apiKey });
+}
 
 const SYSTEM_PROMPT = `You are "Ask the Fathers" - an Orthodox theological knowledge assistant for the Ethiopian Orthodox Tewahedo Church's Sunday School platform (ደብረ ነገስት).
 
@@ -46,7 +50,7 @@ export async function GET() {
       include: {
         messages: {
           take: 1,
-          orderBy: { createdAt: "desc" },
+          orderBy: { createdAt: "asc" },
         },
       },
     });
@@ -75,8 +79,9 @@ export async function POST(req: NextRequest) {
     let theologyConversation;
 
     if (conversationId) {
-      theologyConversation = await db.theologyConversation.findUnique({
-        where: { id: conversationId },
+      // Verify ownership by filtering on userId
+      theologyConversation = await db.theologyConversation.findFirst({
+        where: { id: conversationId, userId: session.user.id },
         include: {
           messages: {
             orderBy: { createdAt: "asc" },
@@ -106,7 +111,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Build message history for context
-    const messageHistory = theologyConversation.messages.map((msg) => ({
+    const messageHistory = theologyConversation.messages.map((msg: { role: string; content: string }) => ({
       role: msg.role === "USER" ? "user" as const : "assistant" as const,
       content: msg.content,
     }));
@@ -114,6 +119,16 @@ export async function POST(req: NextRequest) {
     messageHistory.push({ role: "user", content: question });
 
     // Call Groq API
+    let groq;
+    try {
+      groq = getGroqClient();
+    } catch {
+      return NextResponse.json(
+        { error: "The AI service is not configured. Please set the GROQ_API_KEY environment variable." },
+        { status: 503 }
+      );
+    }
+
     const completion = await groq.chat.completions.create({
       messages: [
         { role: "system", content: SYSTEM_PROMPT },

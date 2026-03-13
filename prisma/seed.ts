@@ -17,14 +17,17 @@ async function main() {
 
   // Create classes
   for (const cls of CLASSES) {
-    await prisma.class.upsert({
-      where: { id: cls.name },
-      update: {},
-      create: {
-        name: cls.name,
-        description: cls.description,
-      },
+    const existing = await prisma.class.findFirst({
+      where: { name: cls.name },
     });
+    if (!existing) {
+      await prisma.class.create({
+        data: {
+          name: cls.name,
+          description: cls.description,
+        },
+      });
+    }
   }
 
   console.log(`Created ${CLASSES.length} classes`);

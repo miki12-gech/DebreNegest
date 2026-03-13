@@ -39,7 +39,7 @@ export async function PATCH(req: NextRequest) {
       });
     } else if (notificationId) {
       await db.notification.update({
-        where: { id: notificationId },
+        where: { id: notificationId, userId: session.user.id },
         data: { isRead: true },
       });
     }

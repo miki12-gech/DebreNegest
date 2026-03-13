@@ -7,7 +7,7 @@ export async function GET() {
     const classes = await db.class.findMany({
       orderBy: { createdAt: "asc" },
       include: {
-        _count: { select: { posts: true, admins: true } },
+        _count: { select: { posts: true, admins: true, members: true } },
         admins: {
           include: {
             user: {
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     const newClass = await db.class.create({
       data: { name, description },
       include: {
-        _count: { select: { posts: true, admins: true } },
+        _count: { select: { posts: true, admins: true, members: true } },
         admins: {
           include: {
             user: {

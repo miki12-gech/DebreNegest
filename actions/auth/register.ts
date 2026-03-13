@@ -8,6 +8,7 @@ const RegisterSchema = z.object({
     fullName: z.string().min(1, { message: "Name is required" }),
     email: z.string().email({ message: "Invalid email address" }),
     password: z.string().min(6, { message: "Minimum 6 characters required" }),
+    classId: z.string().min(1, { message: "Please select a class" }),
     image: z.string().optional(),
 });
 
@@ -18,7 +19,7 @@ export const register = async (values: z.infer<typeof RegisterSchema>) => {
         return { error: "Invalid fields!" };
     }
 
-    const { email, password, fullName, image } = validatedFields.data;
+    const { email, password, fullName, classId, image } = validatedFields.data;
 
     try {
         const existingUser = await db.user.findUnique({
@@ -31,6 +32,12 @@ export const register = async (values: z.infer<typeof RegisterSchema>) => {
             return { error: "Email already in use!" };
         }
 
+        // Validate that the selected class exists
+        const classExists = await db.class.findUnique({ where: { id: classId } });
+        if (!classExists) {
+            return { error: "Invalid class selected!" };
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const user = await db.user.create({
@@ -40,6 +47,7 @@ export const register = async (values: z.infer<typeof RegisterSchema>) => {
                 email,
                 password: hashedPassword,
                 image: image || null,
+                class: { connect: { id: classId } },
                 // Role defaults to MEMBER in Prisma Schema
             },
         });
