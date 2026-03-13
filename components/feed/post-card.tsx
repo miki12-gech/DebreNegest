@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { Heart, MessageCircle, Bookmark, Pin, MoreHorizontal, Send } from "lucide-react";
+import { Heart, MessageCircle, Bookmark, Pin, MoreHorizontal, Send, Reply } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -61,6 +61,8 @@ export function PostCard({ post, onUpdate }: PostCardProps) {
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentText, setCommentText] = useState("");
+  const [replyingTo, setReplyingTo] = useState<{ id: string; authorName: string } | null>(null);
+  const [replyText, setReplyText] = useState("");
   const [isLiked, setIsLiked] = useState(
     post.likes.some((l) => l.userId === session?.user?.id)
   );
@@ -117,6 +119,27 @@ export function PostCard({ post, onUpdate }: PostCardProps) {
       }
     } catch {
       toast.error("Failed to post comment");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleReply = async (parentId: string) => {
+    if (!replyText.trim()) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`/api/posts/${post.id}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: replyText, parentId }),
+      });
+      if (res.ok) {
+        setReplyText("");
+        setReplyingTo(null);
+        loadComments();
+      }
+    } catch {
+      toast.error("Failed to post reply");
     } finally {
       setIsSubmitting(false);
     }
@@ -280,9 +303,57 @@ export function PostCard({ post, onUpdate }: PostCardProps) {
                         {comment.content}
                       </p>
                     </div>
-                    <p className="text-xs text-orthodox-parchment/30 mt-1 ml-2">
-                      {formatDate(comment.createdAt)}
-                    </p>
+                    <div className="flex items-center gap-3 mt-1 ml-2">
+                      <p className="text-xs text-orthodox-parchment/30">
+                        {formatDate(comment.createdAt)}
+                      </p>
+                      <button
+                        onClick={() => setReplyingTo({ id: comment.id, authorName: comment.author.fullName || comment.author.name || "User" })}
+                        className="flex items-center gap-1 text-xs text-orthodox-parchment/40 hover:text-orthodox-gold transition-colors"
+                      >
+                        <Reply className="h-3 w-3" />
+                        Reply
+                      </button>
+                    </div>
+
+                    {/* Reply input */}
+                    {replyingTo?.id === comment.id && (
+                      <div className="flex gap-2 mt-2 ml-4">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={session?.user?.image || ""} />
+                          <AvatarFallback className="text-xs">
+                            {getInitials(session?.user?.fullName || session?.user?.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 flex gap-2">
+                          <Textarea
+                            placeholder={`Reply to ${replyingTo.authorName}...`}
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                            className="min-h-[32px] resize-none text-xs"
+                            rows={1}
+                          />
+                          <div className="flex flex-col gap-1">
+                            <Button
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => handleReply(comment.id)}
+                              disabled={!replyText.trim() || isSubmitting}
+                            >
+                              <Send className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-7 w-7 text-xs"
+                              onClick={() => { setReplyingTo(null); setReplyText(""); }}
+                            >
+                              &times;
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Nested replies */}
                     {comment.replies?.map((reply) => (

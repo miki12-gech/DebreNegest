@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { Send, ImagePlus, Globe, Pin } from "lucide-react";
+import { Send, ImagePlus, Globe, Pin, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { getInitials } from "@/lib/utils";
 import { toast } from "sonner";
+import { UploadDropzone } from "@/lib/uploadthing";
 
 interface ClassOption {
   id: string;
@@ -36,7 +37,11 @@ export function CreatePost({ classId, onPostCreated }: CreatePostProps) {
   const [classes, setClasses] = useState<ClassOption[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showTitle, setShowTitle] = useState(false);
+  const [imageUrl, setImageUrl] = useState("");
+  const [showImageUpload, setShowImageUpload] = useState(false);
   const isAdmin = session?.user?.role === "SUPER_ADMIN";
+  const isClassAdmin = session?.user?.role === "CLASS_ADMIN";
+  const canPost = isAdmin || isClassAdmin;
 
   useEffect(() => {
     if (!classId) {
@@ -57,6 +62,7 @@ export function CreatePost({ classId, onPostCreated }: CreatePostProps) {
         body: JSON.stringify({
           title: title || null,
           content,
+          image: imageUrl || null,
           classId: classId || selectedClassId || null,
         }),
       });
@@ -64,6 +70,8 @@ export function CreatePost({ classId, onPostCreated }: CreatePostProps) {
       if (res.ok) {
         setContent("");
         setTitle("");
+        setImageUrl("");
+        setShowImageUpload(false);
         toast.success("Post created!");
         onPostCreated?.();
       } else {
@@ -78,6 +86,7 @@ export function CreatePost({ classId, onPostCreated }: CreatePostProps) {
   };
 
   if (!session?.user) return null;
+  if (!canPost) return null;
 
   return (
     <Card>
@@ -114,6 +123,16 @@ export function CreatePost({ classId, onPostCreated }: CreatePostProps) {
                 >
                   {showTitle ? "Hide Title" : "Add Title"}
                 </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowImageUpload(!showImageUpload)}
+                  className="text-xs gap-1"
+                >
+                  <ImagePlus className="h-4 w-4" />
+                  {showImageUpload ? "Hide Image" : "Add Photo"}
+                </Button>
                 {!classId && (
                   <Select
                     value={selectedClassId}
@@ -143,6 +162,39 @@ export function CreatePost({ classId, onPostCreated }: CreatePostProps) {
                 Post
               </Button>
             </div>
+
+            {/* Image upload section */}
+            {showImageUpload && (
+              <div className="mt-3">
+                {imageUrl ? (
+                  <div className="relative inline-block">
+                    <img
+                      src={imageUrl}
+                      alt="Upload preview"
+                      className="rounded-lg max-h-48 object-cover border border-orthodox-gold/10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setImageUrl("")}
+                      className="absolute -top-2 -right-2 bg-orthodox-red text-white rounded-full p-1 hover:bg-orthodox-red/80 transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <UploadDropzone
+                    endpoint="imageUploader"
+                    onClientUploadComplete={(res) => {
+                      setImageUrl(res[0].url);
+                      toast.success("Image uploaded!");
+                    }}
+                    onUploadError={(error: Error) => {
+                      toast.error(`ERROR! ${error.message}`);
+                    }}
+                  />
+                )}
+              </div>
+            )}
           </div>
         </div>
       </CardContent>

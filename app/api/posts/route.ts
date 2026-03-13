@@ -68,6 +68,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Content is required" }, { status: 400 });
     }
 
+    // Only CLASS_ADMIN and SUPER_ADMIN can create posts
+    if (session.user.role !== "SUPER_ADMIN" && session.user.role !== "CLASS_ADMIN") {
+      return NextResponse.json({ error: "Only class leaders and admins can create posts" }, { status: 403 });
+    }
+
     // Only SUPER_ADMIN can create global or pinned posts
     if ((isGlobal || isPinned) && session.user.role !== "SUPER_ADMIN") {
       return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });

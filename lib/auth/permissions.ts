@@ -23,14 +23,14 @@ export const isClassAdminOrHigher = async () => {
 };
 
 /**
- * Validates if the user has permission to post to a class.
- * SUPER_ADMIN -> globally valid
- * CLASS_ADMIN -> valid
- * MEMBER      -> valid
+ * Validates if the user has permission to post.
+ * SUPER_ADMIN -> can post
+ * CLASS_ADMIN -> can post
+ * MEMBER      -> can only view, like, comment, reply, and ask the Apostolic Father
  */
 export const canPost = async () => {
-    const user = await currentUser();
-    return !!user; // For now all authenticated users can post to their classes
+    const role = await currentRole();
+    return role === "SUPER_ADMIN" || role === "CLASS_ADMIN";
 };
 
 /**
