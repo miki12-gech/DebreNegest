@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, useState } from "react";
+import { useTransition, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -16,21 +16,46 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { UploadDropzone } from "@/lib/uploadthing";
+
+interface ClassOption {
+    id: string;
+    name: string;
+}
 
 const RegisterSchema = z.object({
     fullName: z.string().min(1, { message: "Name is required" }),
     email: z.string().email({ message: "Invalid email address" }),
     password: z.string().min(6, { message: "Minimum 6 characters required" }),
     image: z.string().optional(),
+    classId: z.string().min(1, { message: "Please select your class" }),
 });
 
 export const RegisterForm = () => {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [imageUrl, setImageUrl] = useState("");
+    const [classes, setClasses] = useState<ClassOption[]>([]);
+
+    useEffect(() => {
+        fetch("/api/classes")
+            .then((res) => res.json())
+            .then((data) => {
+                if (Array.isArray(data)) {
+                    setClasses(data);
+                }
+            })
+            .catch(console.error);
+    }, []);
 
     const form = useForm<z.infer<typeof RegisterSchema>>({
         resolver: zodResolver(RegisterSchema),
@@ -39,6 +64,7 @@ export const RegisterForm = () => {
             email: "",
             password: "",
             image: "",
+            classId: "",
         },
     });
 
@@ -113,6 +139,34 @@ export const RegisterForm = () => {
                                         type="password"
                                     />
                                 </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="classId"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Select Your Class</FormLabel>
+                                <Select
+                                    onValueChange={field.onChange}
+                                    defaultValue={field.value}
+                                    disabled={isPending}
+                                >
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Choose the class you belong to" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {classes.map((c) => (
+                                            <SelectItem key={c.id} value={c.id}>
+                                                {c.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                                 <FormMessage />
                             </FormItem>
                         )}

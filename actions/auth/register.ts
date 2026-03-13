@@ -9,6 +9,7 @@ const RegisterSchema = z.object({
     email: z.string().email({ message: "Invalid email address" }),
     password: z.string().min(6, { message: "Minimum 6 characters required" }),
     image: z.string().optional(),
+    classId: z.string().min(1, { message: "Please select your class" }),
 });
 
 export const register = async (values: z.infer<typeof RegisterSchema>) => {
@@ -18,7 +19,7 @@ export const register = async (values: z.infer<typeof RegisterSchema>) => {
         return { error: "Invalid fields!" };
     }
 
-    const { email, password, fullName, image } = validatedFields.data;
+    const { email, password, fullName, image, classId } = validatedFields.data;
 
     try {
         const existingUser = await db.user.findUnique({
@@ -40,6 +41,7 @@ export const register = async (values: z.infer<typeof RegisterSchema>) => {
                 email,
                 password: hashedPassword,
                 image: image || null,
+                classId: classId || null,
                 // Role defaults to MEMBER in Prisma Schema
             },
         });

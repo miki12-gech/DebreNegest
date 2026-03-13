@@ -10,6 +10,8 @@ import {
   User,
   Shield,
   Settings,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -21,7 +23,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getInitials } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 
 const pageTitles: Record<string, string> = {
   "/feed": "Feed",
@@ -37,6 +40,12 @@ export function TopBar() {
   const { data: session } = useSession();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const title = Object.entries(pageTitles).find(([key]) =>
     pathname.startsWith(key)
@@ -60,6 +69,29 @@ export function TopBar() {
 
         {/* Right side */}
         <div className="flex items-center gap-3">
+          {/* Night Mode Toggle */}
+          {mounted && (
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="relative flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300 hover:bg-orthodox-gold/10"
+              title={theme === "dark" ? "Switch to Light Mode" : "Switch to Night Mode"}
+            >
+              <Sun
+                className={`h-5 w-5 absolute transition-all duration-300 ${
+                  theme === "dark"
+                    ? "rotate-90 scale-0 opacity-0"
+                    : "rotate-0 scale-100 opacity-100 text-orthodox-gold"
+                }`}
+              />
+              <Moon
+                className={`h-5 w-5 absolute transition-all duration-300 ${
+                  theme === "dark"
+                    ? "rotate-0 scale-100 opacity-100 text-orthodox-gold"
+                    : "-rotate-90 scale-0 opacity-0"
+                }`}
+              />
+            </button>
+          )}
           {session?.user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
