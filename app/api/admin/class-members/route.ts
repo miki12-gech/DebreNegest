@@ -21,6 +21,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Class ID is required" }, { status: 400 });
     }
 
+    // CLASS_ADMIN can only access their own classes
+    if (userRole === "CLASS_ADMIN") {
+      const isAdmin = await db.classAdmin.findFirst({ where: { userId: session.user.id, classId } });
+      if (!isAdmin) {
+        return NextResponse.json({ error: "You are not an admin of this class" }, { status: 403 });
+      }
+    }
+
     const members = await db.classMember.findMany({
       where: { classId },
       include: {
@@ -62,6 +70,14 @@ export async function POST(req: NextRequest) {
 
     if (!userId || !classId) {
       return NextResponse.json({ error: "User ID and Class ID are required" }, { status: 400 });
+    }
+
+    // CLASS_ADMIN can only add members to their own classes
+    if (userRole === "CLASS_ADMIN") {
+      const isAdmin = await db.classAdmin.findFirst({ where: { userId: session.user.id, classId } });
+      if (!isAdmin) {
+        return NextResponse.json({ error: "You are not an admin of this class" }, { status: 403 });
+      }
     }
 
     const existing = await db.classMember.findFirst({
@@ -112,6 +128,18 @@ export async function DELETE(req: NextRequest) {
 
     if (!memberId) {
       return NextResponse.json({ error: "Member ID is required" }, { status: 400 });
+    }
+
+    // CLASS_ADMIN can only remove members from their own classes
+    if (userRole === "CLASS_ADMIN") {
+      const membership = await db.classMember.findUnique({ where: { id: memberId } });
+      if (!membership) {
+        return NextResponse.json({ error: "Member not found" }, { status: 404 });
+      }
+      const isAdmin = await db.classAdmin.findFirst({ where: { userId: session.user.id, classId: membership.classId } });
+      if (!isAdmin) {
+        return NextResponse.json({ error: "You are not an admin of this class" }, { status: 403 });
+      }
     }
 
     await db.classMember.delete({

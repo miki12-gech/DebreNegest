@@ -68,12 +68,15 @@ export async function DELETE(req: NextRequest) {
       where: { userId },
     });
 
-    // If no more class admin roles, revert to MEMBER
+    // If no more class admin roles, revert to MEMBER (but don't downgrade SUPER_ADMIN)
     if (otherAdminRoles === 0) {
-      await db.user.update({
-        where: { id: userId },
-        data: { role: "MEMBER" },
-      });
+      const user = await db.user.findUnique({ where: { id: userId }, select: { role: true } });
+      if (user?.role === "CLASS_ADMIN") {
+        await db.user.update({
+          where: { id: userId },
+          data: { role: "MEMBER" },
+        });
+      }
     }
 
     return NextResponse.json({ success: true });
