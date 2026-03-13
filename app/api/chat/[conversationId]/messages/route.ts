@@ -13,6 +13,15 @@ export async function GET(
     }
 
     const { conversationId } = await params;
+
+    // Verify user is a member of this conversation
+    const membership = await db.conversationMember.findUnique({
+      where: { conversationId_userId: { conversationId, userId: session.user.id } },
+    });
+    if (!membership) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const messages = await db.message.findMany({
       where: { conversationId },
       orderBy: { createdAt: "asc" },
@@ -44,6 +53,15 @@ export async function POST(
     }
 
     const { conversationId } = await params;
+
+    // Verify user is a member of this conversation
+    const postMembership = await db.conversationMember.findUnique({
+      where: { conversationId_userId: { conversationId, userId: session.user.id } },
+    });
+    if (!postMembership) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const body = await req.json();
     const { content, image } = body;
 

@@ -18,8 +18,22 @@ export async function GET() {
         email: true,
         image: true,
         role: true,
+        classId: true,
         createdAt: true,
         _count: { select: { posts: true, comments: true } },
+        classesAdministered: {
+          select: {
+            classId: true,
+            class: { select: { id: true, name: true } },
+          },
+        },
+        classMemberships: {
+          select: {
+            classId: true,
+            class: { select: { id: true, name: true } },
+          },
+        },
+        class: { select: { id: true, name: true } },
       },
     });
 

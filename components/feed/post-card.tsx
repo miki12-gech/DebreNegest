@@ -2,13 +2,19 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { Heart, MessageCircle, Bookmark, Pin, MoreHorizontal, Send } from "lucide-react";
+import { Heart, MessageCircle, Bookmark, Pin, MoreHorizontal, Send, Reply, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn, formatDate, getInitials } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -61,6 +67,8 @@ export function PostCard({ post, onUpdate }: PostCardProps) {
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentText, setCommentText] = useState("");
+  const [replyText, setReplyText] = useState("");
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [isLiked, setIsLiked] = useState(
     post.likes.some((l) => l.userId === session?.user?.id)
   );
@@ -69,6 +77,10 @@ export function PostCard({ post, onUpdate }: PostCardProps) {
   );
   const [likeCount, setLikeCount] = useState(post._count.likes);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const canDelete =
+    session?.user?.id === post.author.id ||
+    session?.user?.role === "SUPER_ADMIN";
 
   const handleLike = async () => {
     try {
@@ -122,6 +134,46 @@ export function PostCard({ post, onUpdate }: PostCardProps) {
     }
   };
 
+  const handleReply = async (parentId: string) => {
+    if (!replyText.trim()) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`/api/posts/${post.id}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: replyText, parentId }),
+      });
+      if (res.ok) {
+        setReplyText("");
+        setReplyingTo(null);
+        loadComments();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to post reply");
+      }
+    } catch {
+      toast.error("Failed to post reply");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this post?")) return;
+    try {
+      const res = await fetch(`/api/posts?postId=${post.id}`, { method: "DELETE" });
+      if (res.ok) {
+        toast.success("Post deleted");
+        onUpdate?.();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to delete post");
+      }
+    } catch {
+      toast.error("Failed to delete post");
+    }
+  };
+
   const toggleComments = () => {
     if (!showComments) {
       loadComments();
@@ -158,9 +210,27 @@ export function PostCard({ post, onUpdate }: PostCardProps) {
             </div>
             <p className="text-xs text-orthodox-parchment/40 mt-0.5">
               {formatDate(post.createdAt)}
-              {post.isGlobal && " · Global"}
+              {post.isGlobal && " \u00B7 Global"}
             </p>
           </div>
+          {canDelete && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  className="text-red-500 cursor-pointer"
+                  onClick={handleDelete}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete post
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
 
         {/* Post content */}
@@ -202,7 +272,7 @@ export function PostCard({ post, onUpdate }: PostCardProps) {
             onClick={handleLike}
             className={cn(
               "flex-1 gap-2",
-              isLiked && "text-orthodox-red hover:text-orthodox-red"
+              isLiked && "text-red-500 hover:text-red-500"
             )}
           >
             <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
@@ -280,9 +350,39 @@ export function PostCard({ post, onUpdate }: PostCardProps) {
                         {comment.content}
                       </p>
                     </div>
-                    <p className="text-xs text-orthodox-parchment/30 mt-1 ml-2">
-                      {formatDate(comment.createdAt)}
-                    </p>
+                    <div className="flex items-center gap-3 mt-1 ml-2">
+                      <p className="text-xs text-orthodox-parchment/30">
+                        {formatDate(comment.createdAt)}
+                      </p>
+                      <button
+                        onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                        className="text-xs text-orthodox-parchment/40 hover:text-orthodox-gold flex items-center gap-1"
+                      >
+                        <Reply className="h-3 w-3" />
+                        Reply
+                      </button>
+                    </div>
+
+                    {/* Reply input */}
+                    {replyingTo === comment.id && (
+                      <div className="flex gap-2 mt-2 ml-4">
+                        <Textarea
+                          placeholder="Write a reply..."
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          className="min-h-[32px] resize-none text-sm"
+                          rows={1}
+                        />
+                        <Button
+                          size="icon"
+                          onClick={() => handleReply(comment.id)}
+                          disabled={!replyText.trim() || isSubmitting}
+                          className="h-8 w-8"
+                        >
+                          <Send className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
 
                     {/* Nested replies */}
                     {comment.replies?.map((reply) => (

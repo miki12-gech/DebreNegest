@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, BookOpen, MessageCircle, Cross, Bell } from "lucide-react";
+import { signOut } from "next-auth/react";
+import { Home, BookOpen, MessageCircle, Cross, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const mobileNavItems = [
@@ -10,7 +11,6 @@ const mobileNavItems = [
   { href: "/classes", label: "ክፍልታት", icon: BookOpen },
   { href: "/chat", label: "Chat", icon: MessageCircle },
   { href: "/theology", label: "Fathers", icon: Cross },
-  { href: "/notifications", label: "Alerts", icon: Bell },
 ];
 
 export function MobileNav() {
@@ -37,6 +37,13 @@ export function MobileNav() {
             </Link>
           );
         })}
+        <button
+          onClick={() => signOut({ callbackUrl: "/" })}
+          className="flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-colors text-orthodox-parchment/40 hover:text-orthodox-red"
+        >
+          <LogOut className="h-5 w-5" />
+          <span className="text-xs">Logout</span>
+        </button>
       </div>
     </nav>
   );

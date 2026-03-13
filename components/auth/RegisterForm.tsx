@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, useState } from "react";
+import { useTransition, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -16,14 +16,29 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { UploadDropzone } from "@/lib/uploadthing";
+import { Loader2 } from "lucide-react";
+
+interface ClassOption {
+    id: string;
+    name: string;
+    description: string | null;
+}
 
 const RegisterSchema = z.object({
     fullName: z.string().min(1, { message: "Name is required" }),
     email: z.string().email({ message: "Invalid email address" }),
     password: z.string().min(6, { message: "Minimum 6 characters required" }),
+    classId: z.string().min(1, { message: "Please select a class" }),
     image: z.string().optional(),
 });
 
@@ -31,6 +46,26 @@ export const RegisterForm = () => {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [imageUrl, setImageUrl] = useState("");
+    const [classes, setClasses] = useState<ClassOption[]>([]);
+    const [loadingClasses, setLoadingClasses] = useState(true);
+
+    useEffect(() => {
+        fetch("/api/classes/public")
+            .then((res) => {
+                if (!res.ok) throw new Error("Failed to load classes");
+                return res.json();
+            })
+            .then((data) => {
+                if (Array.isArray(data)) {
+                    setClasses(data);
+                }
+                setLoadingClasses(false);
+            })
+            .catch(() => {
+                toast.error("Failed to load classes. Please refresh the page.");
+                setLoadingClasses(false);
+            });
+    }, []);
 
     const form = useForm<z.infer<typeof RegisterSchema>>({
         resolver: zodResolver(RegisterSchema),
@@ -38,12 +73,13 @@ export const RegisterForm = () => {
             fullName: "",
             email: "",
             password: "",
+            classId: "",
             image: "",
         },
     });
 
     const onSubmit = (values: z.infer<typeof RegisterSchema>) => {
-        values.image = imageUrl; // Attach uploaded image before submit
+        values.image = imageUrl;
 
         startTransition(() => {
             register(values)
@@ -53,7 +89,7 @@ export const RegisterForm = () => {
                     }
                     if (data?.success) {
                         toast.success(data.success);
-                        router.push("/login"); // Redirect to login after successful register
+                        router.push("/login");
                     }
                 })
                 .catch(() => toast.error("Something went wrong"));
@@ -113,6 +149,40 @@ export const RegisterForm = () => {
                                         type="password"
                                     />
                                 </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="classId"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Class / Department (ክፍል)</FormLabel>
+                                <Select
+                                    onValueChange={field.onChange}
+                                    defaultValue={field.value}
+                                    disabled={isPending || loadingClasses}
+                                >
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder={loadingClasses ? "Loading classes..." : "Select your class"} />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {loadingClasses ? (
+                                            <div className="flex items-center justify-center py-2">
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            </div>
+                                        ) : (
+                                            classes.map((cls) => (
+                                                <SelectItem key={cls.id} value={cls.id}>
+                                                    {cls.name}
+                                                </SelectItem>
+                                            ))
+                                        )}
+                                    </SelectContent>
+                                </Select>
                                 <FormMessage />
                             </FormItem>
                         )}

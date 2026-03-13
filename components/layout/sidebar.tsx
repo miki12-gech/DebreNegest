@@ -8,11 +8,11 @@ import {
   BookOpen,
   MessageCircle,
   Bell,
-  Settings,
   LogOut,
   Shield,
   Cross,
   User,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -32,10 +32,15 @@ const adminItems = [
   { href: "/admin", label: "Admin Panel", icon: Shield },
 ];
 
+const classAdminItems = [
+  { href: "/class-leader", label: "My Class", icon: Users },
+];
+
 export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === "SUPER_ADMIN";
+  const isClassAdmin = session?.user?.role === "CLASS_ADMIN";
 
   return (
     <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 z-30">
@@ -104,6 +109,30 @@ export function Sidebar() {
               })}
             </>
           )}
+
+          {isClassAdmin && (
+            <>
+              <Separator className="my-3" />
+              {classAdminItems.map((item) => {
+                const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                      isActive
+                        ? "bg-orthodox-burgundy/30 text-orthodox-gold shadow-sm"
+                        : "text-orthodox-parchment/60 hover:text-orthodox-parchment hover:bg-orthodox-burgundy/10"
+                    )}
+                  >
+                    <item.icon className={cn("h-5 w-5", isActive && "text-orthodox-gold")} />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </>
+          )}
         </nav>
 
         {/* User section */}
@@ -122,14 +151,14 @@ export function Sidebar() {
                   {session.user.email}
                 </p>
               </div>
-              <button
-                onClick={() => signOut({ callbackUrl: "/" })}
-                className="p-2 rounded-lg text-orthodox-parchment/40 hover:text-orthodox-red hover:bg-orthodox-red/10 transition-colors"
-                title="Sign out"
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
             </div>
+            <button
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-orthodox-parchment/60 hover:text-orthodox-red hover:bg-orthodox-red/10 transition-colors"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign out
+            </button>
           </div>
         )}
       </div>

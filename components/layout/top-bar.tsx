@@ -4,12 +4,10 @@ import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
-  Menu,
   Cross,
   LogOut,
   User,
   Shield,
-  Settings,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -21,8 +19,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getInitials } from "@/lib/utils";
-import { useState } from "react";
-
 const pageTitles: Record<string, string> = {
   "/feed": "Feed",
   "/classes": "ክፍልታት (Classes)",
@@ -36,8 +32,6 @@ const pageTitles: Record<string, string> = {
 export function TopBar() {
   const { data: session } = useSession();
   const pathname = usePathname();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
   const title = Object.entries(pageTitles).find(([key]) =>
     pathname.startsWith(key)
   )?.[1] || "ደብረ ነገስት";
